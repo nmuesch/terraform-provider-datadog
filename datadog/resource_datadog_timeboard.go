@@ -18,16 +18,16 @@ func resourceDatadogTimeboard() *schema.Resource {
 		Required: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"q": &schema.Schema{
+				"q": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
-				"stacked": &schema.Schema{
+				"stacked": {
 					Type:     schema.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
-				"type": &schema.Schema{
+				"type": {
 					Type:     schema.TypeString,
 					Optional: true,
 					Default:  "line",
@@ -37,37 +37,44 @@ func resourceDatadogTimeboard() *schema.Resource {
 					Optional:     true,
 					ValidateFunc: validateAggregatorMethod,
 				},
-				"style": &schema.Schema{
+				"style": {
 					Type:     schema.TypeMap,
 					Optional: true,
 				},
-				"conditional_format": &schema.Schema{
+				"metadata_json": {
+					Type:     schema.TypeString,
+					Optional: true,
+					// NOTE: this is using functions from resource_datadog_screenboard
+					// since the metadata attribute is the same for both of these boards
+					ValidateFunc: validateMetadataJSON,
+				},
+				"conditional_format": {
 					Type:        schema.TypeList,
 					Optional:    true,
 					Description: "A list of conditional formatting rules.",
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"palette": &schema.Schema{
+							"palette": {
 								Type:        schema.TypeString,
 								Optional:    true,
 								Description: "The palette to use if this condition is met.",
 							},
-							"comparator": &schema.Schema{
+							"comparator": {
 								Type:        schema.TypeString,
 								Required:    true,
 								Description: "Comparator (<, >, etc)",
 							},
-							"custom_bg_color": &schema.Schema{
+							"custom_bg_color": {
 								Type:        schema.TypeString,
 								Optional:    true,
 								Description: "Custom background color (e.g., #205081)",
 							},
-							"value": &schema.Schema{
+							"value": {
 								Type:        schema.TypeString,
 								Optional:    true,
 								Description: "Value that is threshold for conditional format",
 							},
-							"custom_fg_color": &schema.Schema{
+							"custom_fg_color": {
 								Type:        schema.TypeString,
 								Optional:    true,
 								Description: "Custom foreground color (e.g., #59afe1)",
@@ -75,35 +82,42 @@ func resourceDatadogTimeboard() *schema.Resource {
 						},
 					},
 				},
-				"change_type": &schema.Schema{
+				"change_type": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Type of change for change graphs.",
 				},
-				"order_direction": &schema.Schema{
+				"order_direction": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Sort change graph in ascending or descending order.",
 				},
-				"compare_to": &schema.Schema{
+				"compare_to": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The time period to compare change against in change graphs.",
 				},
-				"increase_good": &schema.Schema{
+				"increase_good": {
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Description: "Decides whether to represent increases as good or bad in change graphs.",
 				},
-				"order_by": &schema.Schema{
+				"order_by": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The field a change graph will be ordered by.",
 				},
-				"extra_col": &schema.Schema{
+				"extra_col": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "If set to 'present', this will include the present values in change graphs.",
+					ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+						stringVal := val.(string)
+						if stringVal != "" && stringVal != "present" {
+							errs = append(errs, fmt.Errorf("'%s' value must be empty or 'present', got: '%s'", key, stringVal))
+						}
+						return
+					},
 				},
 			},
 		},
@@ -114,15 +128,15 @@ func resourceDatadogTimeboard() *schema.Resource {
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"type": &schema.Schema{
+				"type": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
-				"value": &schema.Schema{
+				"value": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
-				"label": &schema.Schema{
+				"label": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
@@ -136,12 +150,12 @@ func resourceDatadogTimeboard() *schema.Resource {
 		Description: "A list of graph definitions.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"title": &schema.Schema{
+				"title": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the graph.",
 				},
-				"events": &schema.Schema{
+				"events": {
 					Type:        schema.TypeList,
 					Optional:    true,
 					Description: "Filter for events to be overlayed on the graph.",
@@ -149,13 +163,13 @@ func resourceDatadogTimeboard() *schema.Resource {
 						Type: schema.TypeString,
 					},
 				},
-				"viz": &schema.Schema{
+				"viz": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
 				"request": request,
 				"marker":  marker,
-				"yaxis": &schema.Schema{
+				"yaxis": {
 					Type:     schema.TypeMap,
 					Optional: true,
 					// `include_zero` and `include_units` are bool but Terraform treats them as strings
@@ -176,27 +190,35 @@ func resourceDatadogTimeboard() *schema.Resource {
 						return oldBool == newBool
 					},
 				},
-				"autoscale": &schema.Schema{
+				"autoscale": {
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Description: "Automatically scale graphs",
 				},
-				"text_align": &schema.Schema{
+				"text_align": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "How to align text",
 				},
-				"precision": &schema.Schema{
+				"precision": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "How many digits to show",
+					// Suppress the diff shown if the graph is going to be set to a default of 2 iff its not set by the config
+					// Since this precision attribute is only valid for certain graph types, we aren't setting a global default
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						if old == "2" && new == "" {
+							return true
+						}
+						return false
+					},
 				},
-				"custom_unit": &schema.Schema{
+				"custom_unit": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Use a custom unit (like 'users')",
 				},
-				"style": &schema.Schema{
+				"style": {
 					Type:     schema.TypeMap,
 					Optional: true,
 					// `palette_flip` is bool but Terraform treats it as a string
@@ -217,7 +239,7 @@ func resourceDatadogTimeboard() *schema.Resource {
 						return oldBool == newBool
 					},
 				},
-				"group": &schema.Schema{
+				"group": {
 					Type:        schema.TypeList,
 					Optional:    true,
 					Description: "A list of groupings for hostmap type graphs.",
@@ -225,12 +247,12 @@ func resourceDatadogTimeboard() *schema.Resource {
 						Type: schema.TypeString,
 					},
 				},
-				"include_no_metric_hosts": &schema.Schema{
+				"include_no_metric_hosts": {
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Description: "Include hosts without metrics in hostmap graphs",
 				},
-				"scope": &schema.Schema{
+				"scope": {
 					Type:        schema.TypeList,
 					Optional:    true,
 					Description: "A list of scope filters for hostmap type graphs.",
@@ -238,12 +260,12 @@ func resourceDatadogTimeboard() *schema.Resource {
 						Type: schema.TypeString,
 					},
 				},
-				"include_ungrouped_hosts": &schema.Schema{
+				"include_ungrouped_hosts": {
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Description: "Include ungrouped hosts in hostmap graphs",
 				},
-				"node_type": &schema.Schema{
+				"node_type": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Type of nodes to show in hostmap graphs (either 'host' or 'container').",
@@ -258,17 +280,17 @@ func resourceDatadogTimeboard() *schema.Resource {
 		Description: "A list of template variables for using Dashboard templating.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": &schema.Schema{
+				"name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the variable.",
 				},
-				"prefix": &schema.Schema{
+				"prefix": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The tag prefix associated with the variable. Only tags with this prefix will appear in the variable dropdown.",
 				},
-				"default": &schema.Schema{
+				"default": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The default value for the template variable on dashboard load.",
@@ -288,17 +310,17 @@ func resourceDatadogTimeboard() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"title": &schema.Schema{
+			"title": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The name of the dashboard.",
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A description of the dashboard's content.",
 			},
-			"read_only": &schema.Schema{
+			"read_only": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
@@ -349,7 +371,7 @@ func buildTemplateVariables(terraformTemplateVariables *[]interface{}) *[]datado
 	return &datadogTemplateVariables
 }
 
-func appendRequests(datadogGraph *datadog.Graph, terraformRequests *[]interface{}) {
+func appendRequests(datadogGraph *datadog.Graph, terraformRequests *[]interface{}) error {
 	for _, _t := range *terraformRequests {
 		t := _t.(map[string]interface{})
 		log.Printf("[DataDog] request: %v", pretty.Sprint(t))
@@ -394,7 +416,12 @@ func appendRequests(datadogGraph *datadog.Graph, terraformRequests *[]interface{
 			d.SetOrderBy(v.(string))
 		}
 		if v, ok := t["extra_col"]; ok {
-			d.SetExtraCol(v.(string))
+			// additional validation: `extra_col` may only be used for `change` viz
+			if viz := datadogGraph.Definition.GetViz(); viz == "change" {
+				d.SetExtraCol(v.(string))
+			} else if v != nil && v != "" {
+				return fmt.Errorf("'extra_col' attribute may only be used for 'change' viz, not '%s'", viz)
+			}
 		}
 		if v, ok := t["order_direction"]; ok {
 			d.SetOrderDirection(v.(string))
@@ -404,9 +431,15 @@ func appendRequests(datadogGraph *datadog.Graph, terraformRequests *[]interface{
 			_v := v.([]interface{})
 			appendConditionalFormats(&d, &_v)
 		}
+		if v, ok := t["metadata_json"]; ok {
+			d.Metadata = map[string]datadog.GraphDefinitionMetadata{}
+			getMetadataFromJSON([]byte(v.(string)), &d.Metadata)
+		}
 
 		datadogGraph.Definition.Requests = append(datadogGraph.Definition.Requests, d)
 	}
+
+	return nil
 }
 
 func appendEvents(datadogGraph *datadog.Graph, terraformEvents *[]interface{}) {
@@ -431,7 +464,7 @@ func appendMarkers(datadogGraph *datadog.Graph, terraformMarkers *[]interface{})
 	}
 }
 
-func buildGraphs(terraformGraphs *[]interface{}) *[]datadog.Graph {
+func buildGraphs(terraformGraphs *[]interface{}) (*[]datadog.Graph, error) {
 	datadogGraphs := make([]datadog.Graph, len(*terraformGraphs))
 	for i, _t := range *terraformGraphs {
 		t := _t.(map[string]interface{})
@@ -543,9 +576,12 @@ func buildGraphs(terraformGraphs *[]interface{}) *[]datadog.Graph {
 		appendEvents(d, &v)
 
 		v = t["request"].([]interface{})
-		appendRequests(d, &v)
+		err := appendRequests(d, &v)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return &datadogGraphs
+	return &datadogGraphs, nil
 }
 
 func buildTimeboard(d *schema.ResourceData) (*datadog.Dashboard, error) {
@@ -559,12 +595,16 @@ func buildTimeboard(d *schema.ResourceData) (*datadog.Dashboard, error) {
 	}
 	terraformGraphs := d.Get("graph").([]interface{})
 	terraformTemplateVariables := d.Get("template_variable").([]interface{})
+	graphs, err := buildGraphs(&terraformGraphs)
+	if err != nil {
+		return nil, err
+	}
 	return &datadog.Dashboard{
 		Id:                datadog.Int(id),
 		Title:             datadog.String(d.Get("title").(string)),
 		Description:       datadog.String(d.Get("description").(string)),
 		ReadOnly:          datadog.Bool(d.Get("read_only").(bool)),
-		Graphs:            *buildGraphs(&terraformGraphs),
+		Graphs:            *graphs,
 		TemplateVariables: *buildTemplateVariables(&terraformTemplateVariables),
 	}, nil
 }
@@ -579,7 +619,7 @@ func resourceDatadogTimeboardCreate(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("Failed to create timeboard using Datadog API: %s", err.Error())
 	}
 	d.SetId(strconv.Itoa(timeboard.GetId()))
-	return nil
+	return resourceDatadogTimeboardRead(d, meta)
 }
 
 func resourceDatadogTimeboardUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -653,6 +693,10 @@ func appendTerraformGraphRequests(datadogRequests []datadog.GraphDefinitionReque
 		}
 		if v, ok := datadogRequest.GetExtraColOk(); ok {
 			request["extra_col"] = v
+		}
+		if datadogRequest.Metadata != nil {
+			res, _ := json.Marshal(datadogRequest.Metadata)
+			request["metadata_json"] = string(res)
 		}
 
 		*requests = append(*requests, request)
@@ -769,10 +813,7 @@ func buildTerraformGraph(datadogGraph datadog.Graph) map[string]interface{} {
 }
 
 func resourceDatadogTimeboardRead(d *schema.ResourceData, meta interface{}) error {
-	id, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return err
-	}
+	id := d.Id()
 	timeboard, err := meta.(*datadog.Client).GetDashboard(id)
 	if err != nil {
 		return err
@@ -811,7 +852,9 @@ func resourceDatadogTimeboardRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("template_variable", templateVariables); err != nil {
 		return err
 	}
-
+	// Ensure the ID saved in the state is always the legacy ID returned from the API
+	// and not the ID passed to the import statement which could be in the new ID format
+	d.SetId(strconv.Itoa(timeboard.GetId()))
 	return nil
 }
 

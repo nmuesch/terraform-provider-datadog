@@ -1,6 +1,7 @@
 package datadog
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -19,7 +20,7 @@ func resourceDatadogScreenboard() *schema.Resource {
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"q": &schema.Schema{
+				"q": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
@@ -32,15 +33,15 @@ func resourceDatadogScreenboard() *schema.Resource {
 		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"type": &schema.Schema{
+				"type": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
-				"value": &schema.Schema{
+				"value": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
-				"label": &schema.Schema{
+				"label": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
@@ -54,27 +55,32 @@ func resourceDatadogScreenboard() *schema.Resource {
 		Description: "A list of conditional formatting rules.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"palette": &schema.Schema{
+				"palette": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The palette to use if this condition is met.",
 				},
-				"comparator": &schema.Schema{
+				"comparator": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "Comparator (<, >, etc)",
 				},
-				"color": &schema.Schema{
+				"color": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Custom color (e.g., #205081)",
 				},
-				"value": &schema.Schema{
+				"value": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Value that is threshold for conditional format",
 				},
-				"invert": &schema.Schema{
+				"custom_bg_color": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Custom  background color (e.g., #205081)",
+				},
+				"invert": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
@@ -87,36 +93,36 @@ func resourceDatadogScreenboard() *schema.Resource {
 		Required: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"q": &schema.Schema{
+				"q": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"type": &schema.Schema{
+				"type": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"query_type": &schema.Schema{
+				"query_type": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"metric": &schema.Schema{
+				"metric": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"text_filter": &schema.Schema{
+				"text_filter": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"tag_filters": &schema.Schema{
+				"tag_filters": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"limit": &schema.Schema{
+				"limit": {
 					Type:     schema.TypeInt,
 					Optional: true,
 				},
-				"style": &schema.Schema{
+				"style": {
 					Type:     schema.TypeMap,
 					Optional: true,
 				},
@@ -126,29 +132,34 @@ func resourceDatadogScreenboard() *schema.Resource {
 					Optional:     true,
 					ValidateFunc: validateAggregatorMethod,
 				},
-				"compare_to": &schema.Schema{
+				"compare_to": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"change_type": &schema.Schema{
+				"change_type": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"order_by": &schema.Schema{
+				"order_by": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"order_dir": &schema.Schema{
+				"order_dir": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"extra_col": &schema.Schema{
+				"extra_col": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"increase_good": &schema.Schema{
+				"increase_good": {
 					Type:     schema.TypeBool,
 					Optional: true,
+				},
+				"metadata_json": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ValidateFunc: validateMetadataJSON,
 				},
 			},
 		},
@@ -162,51 +173,51 @@ func resourceDatadogScreenboard() *schema.Resource {
 				"event":   tileDefEvent,
 				"marker":  tileDefMarker,
 				"request": tileDefRequest,
-				"viz": &schema.Schema{
+				"viz": {
 					Type:     schema.TypeString,
 					Required: true,
 				},
-				"custom_unit": &schema.Schema{
+				"custom_unit": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"autoscale": &schema.Schema{
+				"autoscale": {
 					Type:     schema.TypeBool,
 					Optional: true,
 					Default:  true,
 				},
-				"precision": &schema.Schema{
+				"precision": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"text_align": &schema.Schema{
+				"text_align": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"node_type": &schema.Schema{
+				"node_type": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "One of: ['host', 'container']",
 				},
-				"scope": &schema.Schema{
+				"scope": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"group": &schema.Schema{
+				"group": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"no_group_hosts": &schema.Schema{
+				"no_group_hosts": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"no_metric_hosts": &schema.Schema{
+				"no_metric_hosts": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"style": &schema.Schema{
+				"style": {
 					Type:     schema.TypeMap,
 					Optional: true,
 				},
@@ -219,288 +230,288 @@ func resourceDatadogScreenboard() *schema.Resource {
 		Description: "A list of widget definitions.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"type": &schema.Schema{
+				"type": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The type of the widget. One of [ 'free_text', 'timeseries', 'query_value', 'toplist', 'change', 'event_timeline', 'event_stream', 'image', 'note', 'alert_graph', 'alert_value', 'iframe', 'check_status', 'trace_service', 'hostmap', 'manage_status', 'log_stream', 'uptime', 'process']",
 				},
-				"title": &schema.Schema{
+				"title": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The name of the widget.",
 				},
-				"title_align": &schema.Schema{
+				"title_align": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Default:     "left",
 					Description: "The alignment of the widget's title.",
 				},
-				"title_size": &schema.Schema{
+				"title_size": {
 					Type:        schema.TypeInt,
 					Optional:    true,
 					Default:     16,
 					Description: "The size of the widget's title.",
 				},
-				"height": &schema.Schema{
+				"height": {
 					Type:        schema.TypeInt,
 					Optional:    true,
 					Default:     15,
 					Description: "The height of the widget.",
 				},
-				"width": &schema.Schema{
+				"width": {
 					Type:        schema.TypeInt,
 					Optional:    true,
 					Default:     50,
 					Description: "The width of the widget.",
 				},
-				"x": &schema.Schema{
+				"x": {
 					Type:        schema.TypeInt,
 					Required:    true,
 					Description: "The position of the widget on the x axis.",
 				},
-				"y": &schema.Schema{
+				"y": {
 					Type:        schema.TypeInt,
 					Required:    true,
 					Description: "The position of the widget on the y axis.",
 				},
-				"text": &schema.Schema{
+				"text": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "For widgets of type 'free_text', the text to use.",
 				},
-				"text_size": &schema.Schema{
+				"text_size": {
 					Type:     schema.TypeString,
 					Optional: true,
 					Default:  "auto",
 				},
-				"text_align": &schema.Schema{
+				"text_align": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"color": &schema.Schema{
+				"color": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"bgcolor": &schema.Schema{
+				"bgcolor": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"font_size": &schema.Schema{
+				"font_size": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"unit": &schema.Schema{
+				"unit": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"alert_id": &schema.Schema{
+				"alert_id": {
 					Type:     schema.TypeInt,
 					Optional: true,
 				},
-				"auto_refresh": &schema.Schema{
+				"auto_refresh": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"legend": &schema.Schema{
+				"legend": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"query": &schema.Schema{
+				"query": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"legend_size": &schema.Schema{
+				"legend_size": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"url": &schema.Schema{
+				"url": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"precision": &schema.Schema{
+				"precision": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"tags": &schema.Schema{
+				"tags": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"viz_type": &schema.Schema{
+				"viz_type": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "One of: ['timeseries', 'toplist']",
 				},
-				"check": &schema.Schema{
+				"check": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"group": &schema.Schema{
+				"group": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"grouping": &schema.Schema{
+				"grouping": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "One of: ['cluster', 'check']",
 				},
-				"group_by": &schema.Schema{
+				"group_by": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"tick_pos": &schema.Schema{
+				"tick_pos": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"tick_edge": &schema.Schema{
+				"tick_edge": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"html": &schema.Schema{
+				"html": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"tick": &schema.Schema{
+				"tick": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"event_size": &schema.Schema{
+				"event_size": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"sizing": &schema.Schema{
+				"sizing": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "One of: ['center', 'zoom', 'fit']",
 				},
-				"margin": &schema.Schema{
+				"margin": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "One of: ['small', 'large']",
 				},
 				"tile_def": tileDef,
-				"time": &schema.Schema{
+				"time": {
 					Type:     schema.TypeMap,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"env": &schema.Schema{
+				"env": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"service_service": &schema.Schema{
+				"service_service": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"service_name": &schema.Schema{
+				"service_name": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"size_version": &schema.Schema{
+				"size_version": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"layout_version": &schema.Schema{
+				"layout_version": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"must_show_hits": &schema.Schema{
+				"must_show_hits": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"must_show_errors": &schema.Schema{
+				"must_show_errors": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"must_show_latency": &schema.Schema{
+				"must_show_latency": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"must_show_breakdown": &schema.Schema{
+				"must_show_breakdown": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"must_show_distribution": &schema.Schema{
+				"must_show_distribution": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"must_show_resource_list": &schema.Schema{
+				"must_show_resource_list": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"display_format": &schema.Schema{
+				"display_format": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "One of: ['counts', 'list', 'countsAndList']",
 				},
-				"color_preference": &schema.Schema{
+				"color_preference": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "One of: ['background', 'text']",
 				},
-				"hide_zero_counts": &schema.Schema{
+				"hide_zero_counts": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"params": &schema.Schema{
+				"params": {
 					Type:     schema.TypeMap,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"manage_status_show_title": &schema.Schema{
+				"manage_status_show_title": {
 					Type:     schema.TypeBool,
 					Optional: true,
 				},
-				"manage_status_title_text": &schema.Schema{
+				"manage_status_title_text": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"manage_status_title_size": &schema.Schema{
+				"manage_status_title_size": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"manage_status_title_align": &schema.Schema{
+				"manage_status_title_align": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"columns": &schema.Schema{
+				"columns": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"logset": &schema.Schema{
+				"logset": {
 					Type:     schema.TypeString,
 					Optional: true,
 				},
-				"timeframes": &schema.Schema{
+				"timeframes": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
-				"rule": &schema.Schema{
+				"rule": {
 					Type:     schema.TypeList,
 					Optional: true,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"threshold": &schema.Schema{
+							"threshold": {
 								Type:     schema.TypeFloat,
 								Optional: true,
 							},
-							"timeframe": &schema.Schema{
+							"timeframe": {
 								Type:     schema.TypeString,
 								Optional: true,
 							},
-							"color": &schema.Schema{
+							"color": {
 								Type:     schema.TypeString,
 								Optional: true,
 							},
 						},
 					},
 				},
-				"monitor": &schema.Schema{
+				"monitor": {
 					Type:     schema.TypeMap,
 					Optional: true,
-					Elem:     &schema.Schema{Type: schema.TypeInt},
+					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
 			},
 		},
@@ -512,17 +523,17 @@ func resourceDatadogScreenboard() *schema.Resource {
 		Description: "A list of template variables for using Dashboard templating.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"name": &schema.Schema{
+				"name": {
 					Type:        schema.TypeString,
 					Required:    true,
 					Description: "The name of the variable.",
 				},
-				"prefix": &schema.Schema{
+				"prefix": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The tag prefix associated with the variable. Only tags with this prefix will appear in the variable dropdown.",
 				},
-				"default": &schema.Schema{
+				"default": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The default value for the template variable on dashboard load.",
@@ -542,28 +553,28 @@ func resourceDatadogScreenboard() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"title": &schema.Schema{
+			"title": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the screenboard",
 			},
-			"height": &schema.Schema{
+			"height": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Height of the screenboard",
 			},
-			"width": &schema.Schema{
+			"width": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Width of the screenboard",
 			},
-			"shared": &schema.Schema{
+			"shared": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Whether the screenboard is shared or not",
 			},
-			"read_only": &schema.Schema{
+			"read_only": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
@@ -577,6 +588,25 @@ func resourceDatadogScreenboard() *schema.Resource {
 // #######################################################################################
 // # Convenience functions to safely pass info from Terraform to the Datadog API wrapper #
 // #######################################################################################
+
+func getMetadataFromJSON(jsonBytes []byte, unmarshalled interface{}) error {
+	decoder := json.NewDecoder(bytes.NewReader(jsonBytes))
+	// make sure we return errors on attributes that we don't expect in metadata
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(unmarshalled)
+	if err != nil {
+		return fmt.Errorf("Failed to unmarshal metadata_json: %s", err)
+	}
+	return nil
+}
+
+func validateMetadataJSON(v interface{}, k string) (ws []string, errors []error) {
+	err := getMetadataFromJSON([]byte(v.(string)), &map[string]datadog.TileDefMetadata{})
+	if err != nil {
+		errors = append(errors, fmt.Errorf("%q contains an invalid JSON: %s", k, err))
+	}
+	return
+}
 
 func setStringFromDict(dict map[string]interface{}, key string, field **string) {
 	if v, ok := dict[key]; ok && v != nil {
@@ -599,7 +629,15 @@ func setBoolFromDict(dict map[string]interface{}, key string, field **bool) {
 // For setJSONNumberFromDict, dict[key] is expected to be a float64
 func setJSONNumberFromDict(dict map[string]interface{}, key string, field **json.Number) {
 	if v, ok := dict[key]; ok {
-		f := json.Number(strconv.FormatFloat(v.(float64), 'e', -1, 64))
+		// style fields can be numbers or strings so we need to handle both types
+		var number string
+
+		if val, ok := v.(float64); ok {
+			number = strconv.FormatFloat(val, 'e', -1, 64)
+		} else {
+			number = v.(string)
+		}
+		f := json.Number(number)
 		*field = &f
 	}
 }
@@ -630,6 +668,12 @@ func setStringListFromDict(dict map[string]interface{}, key string, field *[]*st
 	}
 }
 
+func setMetadataFromDict(dict map[string]interface{}, key string, field *map[string]datadog.TileDefMetadata) {
+	if v, ok := dict[key].(map[string]datadog.TileDefMetadata); ok {
+		*field = v
+	}
+}
+
 func setFromDict(dict map[string]interface{}, key string, field interface{}) {
 	switch field.(type) {
 	case **string:
@@ -642,6 +686,8 @@ func setFromDict(dict map[string]interface{}, key string, field interface{}) {
 		setJSONNumberFromDict(dict, key, field.(**json.Number))
 	case **datadog.PrecisionT:
 		setPrecisionTFromDict(dict, key, field.(**datadog.PrecisionT))
+	case *map[string]datadog.TileDefMetadata:
+		setMetadataFromDict(dict, key, field.(*map[string]datadog.TileDefMetadata))
 	case *[]*string:
 		setStringListFromDict(dict, key, field.(*[]*string))
 	default:
@@ -687,6 +733,7 @@ func buildTileDefRequestsConditionalFormats(source interface{}) []datadog.Condit
 				{"palette", &d.Palette},
 				{"color", &d.Color},
 				{"value", &d.Value},
+				{"custom_bg_color", &d.CustomBgColor},
 				{"invert", &d.Invert},
 			}})
 
@@ -704,6 +751,9 @@ func buildTileDefRequests(source interface{}) []datadog.TileDefRequest {
 	r := []datadog.TileDefRequest{}
 	for _, request := range requests {
 		requestMap := request.(map[string]interface{})
+		metadata := map[string]datadog.TileDefMetadata{}
+		getMetadataFromJSON([]byte(requestMap["metadata_json"].(string)), &metadata)
+		requestMap["metadata"] = metadata
 		d := datadog.TileDefRequest{}
 		batchSetFromDict(batch{
 			dict: requestMap,
@@ -722,6 +772,7 @@ func buildTileDefRequests(source interface{}) []datadog.TileDefRequest {
 				{"extra_col", &d.ExtraCol},
 				{"increase_good", &d.IncreaseGood},
 				{"tag_filters", &d.TagFilters},
+				{"metadata", &d.Metadata},
 			}})
 
 		// request.style
@@ -1004,7 +1055,8 @@ func resourceDatadogScreenboardCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("Failed to create screenboard using Datadog API: %s", err.Error())
 	}
 	d.SetId(strconv.Itoa(screenboard.GetId()))
-	return nil
+
+	return resourceDatadogScreenboardRead(d, meta)
 }
 
 // #######################################################################################
@@ -1030,7 +1082,13 @@ func setIntToDict(dict map[string]interface{}, key string, field *int) {
 }
 
 func setJSONNumberToDict(dict map[string]interface{}, key string, field *json.Number) {
-	if field != nil {
+	if field == nil {
+		return
+	}
+	// for fill_min and fill_max, we do not convert to float
+	if key == "fill_min" || key == "fill_max" {
+		dict[key] = *field
+	} else {
 		v, err := (*field).Float64()
 		if err != nil {
 			panic(fmt.Sprintf("setJSONNumberToDict(): %v is not convertible to float", *field))
@@ -1101,6 +1159,7 @@ func buildTFTileDefRequestConditionalFormats(d []datadog.ConditionalFormat) []in
 				{"palette", ddConditionalFormat.Palette},
 				{"color", ddConditionalFormat.Color},
 				{"value", ddConditionalFormat.Value},
+				{"custom_bg_color", ddConditionalFormat.CustomBgColor},
 				{"invert", ddConditionalFormat.Invert},
 			}})
 		r[i] = tfConditionalFormat
@@ -1136,6 +1195,10 @@ func buildTFTileDefRequests(d []datadog.TileDefRequest) []interface{} {
 				{"increase_good", ddRequest.IncreaseGood},
 				{"tag_filters", ddRequest.TagFilters},
 			}})
+		if ddRequest.Metadata != nil {
+			res, _ := json.Marshal(ddRequest.Metadata)
+			tfRequest["metadata_json"] = string(res)
+		}
 
 		// request.style
 		if ddRequest.Style != nil {
@@ -1365,10 +1428,7 @@ func buildTFWidget(dw datadog.Widget) map[string]interface{} {
 }
 
 func resourceDatadogScreenboardRead(d *schema.ResourceData, meta interface{}) error {
-	id, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return err
-	}
+	id := d.Id()
 	screenboard, err := meta.(*datadog.Client).GetScreenboard(id)
 	if err != nil {
 		return err
@@ -1416,6 +1476,9 @@ func resourceDatadogScreenboardRead(d *schema.ResourceData, meta interface{}) er
 	if err := d.Set("template_variable", templateVariables); err != nil {
 		return err
 	}
+	// Ensure the ID saved in the state is always the legacy ID returned from the API
+	// and not the ID passed to the import statement which could be in the new ID format
+	d.SetId(strconv.Itoa(screenboard.GetId()))
 
 	return nil
 }

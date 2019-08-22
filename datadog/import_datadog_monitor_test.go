@@ -14,10 +14,10 @@ func TestDatadogMonitor_import(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckDatadogMonitorDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckDatadogMonitorConfigImported,
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -34,10 +34,10 @@ func TestDatadogMonitor_import_no_recovery(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckDatadogMonitorDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckDatadogMonitorConfigImportedNoRecovery,
 			},
-			resource.TestStep{
+			{
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -55,7 +55,7 @@ resource "datadog_monitor" "foo" {
 
   query = "avg(last_1h):avg:aws.ec2.cpu{environment:foo,host:foo} by {host} > 2.5"
 
-  thresholds {
+  thresholds = {
     ok = 1.5
     warning           = 2.3
     warning_recovery  = 2.2
@@ -85,7 +85,7 @@ resource "datadog_monitor" "foo" {
 
   query = "avg(last_1h):avg:aws.ec2.cpu{environment:foo,host:foo} by {host} > 2.5"
 
-  thresholds {
+  thresholds = {
     ok = 1.5
     warning           = 2.3
     critical          = 2.5

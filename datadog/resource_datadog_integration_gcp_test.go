@@ -11,7 +11,7 @@ import (
 
 const testAccCheckDatadogIntegrationGCPConfig = `
 resource "datadog_integration_gcp" "awesome_gcp_project_integration" {
-  project_id     = "awesome-project-id"
+  project_id     = "super-awesome-project-id"
   private_key_id = "1234567890123456789012345678901234567890"
   private_key    = "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
   client_email   = "awesome-service-account@awesome-project-id.iam.gserviceaccount.com"
@@ -21,7 +21,7 @@ resource "datadog_integration_gcp" "awesome_gcp_project_integration" {
 `
 const testAccCheckDatadogIntegrationGCPEmptyHostFiltersConfig = `
 resource "datadog_integration_gcp" "awesome_gcp_project_integration" {
-  project_id     = "awesome-project-id"
+  project_id     = "super-awesome-project-id"
   private_key_id = "1234567890123456789012345678901234567890"
   private_key    = "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
   client_email   = "awesome-service-account@awesome-project-id.iam.gserviceaccount.com"
@@ -35,13 +35,13 @@ func TestAccDatadogIntegrationGCP(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: checkIntegrationGCPDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccCheckDatadogIntegrationGCPConfig,
 				Check: resource.ComposeTestCheckFunc(
 					checkIntegrationGCPExists,
 					resource.TestCheckResourceAttr(
 						"datadog_integration_gcp.awesome_gcp_project_integration",
-						"project_id", "awesome-project-id"),
+						"project_id", "super-awesome-project-id"),
 					resource.TestCheckResourceAttr(
 						"datadog_integration_gcp.awesome_gcp_project_integration",
 						"private_key_id", "1234567890123456789012345678901234567890"),
@@ -59,13 +59,13 @@ func TestAccDatadogIntegrationGCP(t *testing.T) {
 						"host_filters", "foo:bar,buzz:lightyear"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testAccCheckDatadogIntegrationGCPEmptyHostFiltersConfig,
 				Check: resource.ComposeTestCheckFunc(
 					checkIntegrationGCPExists,
 					resource.TestCheckResourceAttr(
 						"datadog_integration_gcp.awesome_gcp_project_integration",
-						"project_id", "awesome-project-id"),
+						"project_id", "super-awesome-project-id"),
 					resource.TestCheckResourceAttr(
 						"datadog_integration_gcp.awesome_gcp_project_integration",
 						"private_key_id", "1234567890123456789012345678901234567890"),

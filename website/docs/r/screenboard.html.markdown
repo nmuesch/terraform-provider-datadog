@@ -10,6 +10,8 @@ description: |-
 
 Provides a Datadog screenboard resource. This can be used to create and manage Datadog screenboards.
 
+~> **Note:**This resource is outdated. Use the new [`datadog_dashboard`](dashboard.html) resource instead.
+
 ## Example Usage
 
 ```hcl
@@ -50,7 +52,7 @@ resource "datadog_screenboard" "acceptance_test" {
     legend      = true
     legend_size = 16
 
-    time {
+    time = {
       live_span = "1d"
     }
 
@@ -61,11 +63,19 @@ resource "datadog_screenboard" "acceptance_test" {
         q    = "avg:system.cpu.user{*}"
         type = "line"
 
-        style {
+        style = {
           palette = "purple"
           type    = "dashed"
           width   = "thin"
         }
+
+        # NOTE: this will only work with TF >= 0.12; see metadata_json
+        # documentation below for example on usage with TF < 0.12
+        metadata_json = jsonencode({
+          "avg:system.cpu.user{*}": {
+            "alias": "CPU Usage"
+          }
+        })
       }
 
       marker {
@@ -97,7 +107,7 @@ resource "datadog_screenboard" "acceptance_test" {
         q    = "avg:system.cpu.user{*}"
         type = "line"
 
-        style {
+        style = {
           palette = "purple"
           type    = "dashed"
           width   = "thin"
@@ -133,7 +143,7 @@ resource "datadog_screenboard" "acceptance_test" {
     legend      = true
     legend_size = "auto"
 
-    time {
+    time = {
       live_span = "1d"
     }
 
@@ -143,7 +153,7 @@ resource "datadog_screenboard" "acceptance_test" {
       request {
         q = "top(avg:system.load.1{*} by {host}, 10, 'mean', 'desc')"
 
-        style {
+        style = {
           palette = "purple"
           type    = "dashed"
           width   = "thin"
@@ -186,7 +196,7 @@ resource "datadog_screenboard" "acceptance_test" {
     title = "event_timeline title terraform"
     query = "status:error"
 
-    time {
+    time = {
       live_span = "1d"
     }
   }
@@ -199,7 +209,7 @@ resource "datadog_screenboard" "acceptance_test" {
     query      = "*"
     event_size = "l"
 
-    time {
+    time = {
       live_span = "4h"
     }
   }
@@ -235,7 +245,7 @@ resource "datadog_screenboard" "acceptance_test" {
     alert_id = "123456"
     viz_type = "toplist"
 
-    time {
+    time = {
       live_span = "15m"
     }
   }
@@ -270,7 +280,7 @@ resource "datadog_screenboard" "acceptance_test" {
     tags        = ["*"]
     group       = "cluster:test"
 
-    time {
+    time = {
       live_span = "30m"
     }
   }
@@ -291,7 +301,7 @@ resource "datadog_screenboard" "acceptance_test" {
     must_show_distribution  = true
     must_show_resource_list = true
 
-    time {
+    time = {
       live_span = "30m"
     }
   }
@@ -315,7 +325,7 @@ resource "datadog_screenboard" "acceptance_test" {
         type = "fill"
       }
 
-      style {
+      style = {
         palette      = "hostmap_blues"
         palette_flip = true
         fill_min     = 20
@@ -336,7 +346,7 @@ resource "datadog_screenboard" "acceptance_test" {
     manage_status_title_size  = "20"
     manage_status_title_align = "right"
 
-    params {
+    params = {
       sort  = "status,asc"
       text  = "status:alert"
       count = 50
@@ -352,7 +362,7 @@ resource "datadog_screenboard" "acceptance_test" {
     columns = "[\"column1\",\"column2\",\"column3\"]"
     logset  = "1234"
 
-    time {
+    time = {
       live_span = "1h"
     }
   }
@@ -492,8 +502,8 @@ Nested `widget` `tile_def` blocks have the following structure:
 - `node_type` - (Optional, only for widgets of type "hostmap") The type of node used. Either "host" or "container".
 - `scope` - (Optional, only for widgets of type "hostmap") The list of tags to filter nodes by.
 - `group` - (Optional, only for widgets of type "hostmap") The list of tags to group nodes by.
-- `no_group_host` - (Optional, only for widgets of type "hostmap") Boolean indicating whether to show ungrouped nodes.
-- `no_metric_host` - (Optional, only for widgets of type "hostmap") Boolean indicating whether to show nodes with no metrics.
+- `no_group_hosts` - (Optional, only for widgets of type "hostmap") Boolean indicating whether to show ungrouped nodes.
+- `no_metric_hosts` - (Optional, only for widgets of type "hostmap") Boolean indicating whether to show nodes with no metrics.
 - `style` - (Optional, only for widgets of type "hostmap") Nested block describing how to display the widget. The structure of this block is described below. At most one such block should be present in a given tile_def block.
 
 ### Nested `widget` `tile_def` `style` blocks
@@ -547,6 +557,30 @@ Nested `widget` `tile_def` `request` blocks have the following structure:
 - `increase_good` - (Optional, only for widgets of type "change") Boolean indicating whether an increase in the value is good (thus displayed in green) or not (thus displayed in red).
 - `style` - (Optional, only for widgets of type "timeseries", "query_value", "toplist", "process") describing how to display the widget. The structure of this block is described below. At most one such block should be present in a given request block.
 - `conditional_format` - (Optional) Nested block to customize the style if certain conditions are met. Currently only applies to `Query Value` and `Top List` type graphs.
+* `metadata_json` - (Optional) A JSON blob (preferrably created using [jsonencode](https://www.terraform.io/docs/configuration/functions/jsonencode.html)) representing mapping of query expressions to alias names. Note that the query expressions in `metadata_json` will be ignored if they're not present in the query. For example, this is how you define `metadata_json` with Terraform >= 0.12:
+  ```
+  metadata_json = jsonencode({
+    "avg:redis.info.latency_ms{$host}": {
+      "alias": "Redis latency"
+    }
+  })
+  ```
+  And here's how you define `metadata_json` with Terraform < 0.12:
+  ```
+  variable "my_metadata" {
+    default = {
+      "avg:redis.info.latency_ms{$host}" = {
+        "alias": "Redis latency"
+      }
+    }
+  }
+
+  resource "datadog_screenboard" "SomeScreenboard" {
+    ...
+          metadata_json = "${jsonencode(var.my_metadata)}"
+  }
+  ```
+  Note that this has to be a JSON blob because of [limitations](https://github.com/hashicorp/terraform/issues/6215) of Terraform's handling complex nested structures. This is also why the key is called `metadata_json` even though it sets `metadata` attribute on the API call.
 
 ### Nested `widget` `tile_def` `request` `style` block
 
